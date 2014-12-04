@@ -1,6 +1,5 @@
 import argparse
 import logging
-import re
 import subprocess
 import sys
 
@@ -25,6 +24,7 @@ def main():
 	)
 	parser.add_argument('--input','-i',nargs='?',type=argparse.FileType('r'),default=None,help="Read list of hosts from input file.")
 	parser.add_argument('--log','-l',default="WARN", help="Log level (default: WARN)")
+	parser.add_argument('--options','-o',default="", help="Options to pass to ssh command.")
 	parser.add_argument('--panes','-p',default=6, help="Max SSH panes per window (default: 6)")
 	parser.add_argument('--session','-s',default='shmux', help="tmux session name (default: shmux)")
 	parser.add_argument('--sync','-S', action='store_true',help="Run set-option synchronize-panes on each tmux window")
@@ -70,9 +70,9 @@ def main():
 				madeNewWindow = False
 			tmux("new-window -t {}:{}".format(args.session,wcnt))
 			tmux("rename-window -t {}:{} {}".format(args.session,wcnt,host))
-			tmux("set-window-option -t {}:{} allow-rename ofargs.session,wcntf".format(args.session,wcnt))
+			tmux("set-window-option -t {}:{} allow-rename off".format(args.session,wcnt))
 
-		tmux("send-keys -t {}:{} \"ssh {}\" C-m".format(args.session,wcnt,host))
+		tmux("send-keys -t {}:{} \"ssh {} {}\" C-m".format(args.session,wcnt,args.options,host))
 		tmux("select-layout -t {}:{} tiled".format(args.session,wcnt))
 
 	if madeNewWindow and args.sync:
