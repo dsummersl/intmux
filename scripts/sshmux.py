@@ -61,14 +61,14 @@ def main():
 			first=0
 			cnt=cnt+1
 		else:
+			if madeNewWindow and args.sync:
+				tmux("set-option -t {}:{} synchronize-panes".format(args.session,wcnt))
+				madeNewWindow = False
 			madeNewWindow = True
 			cnt=cnt+1
 			wcnt=wcnt+1
 			cnt=1
-			if madeNewWindow and args.sync:
-				tmux("set-option -t {}:{} synchronize-panes".format(args.session,wcnt))
-				madeNewWindow = False
-			tmux("new-window -t {}:{}".format(args.session,wcnt))
+			tmux("new-window -t {}".format(args.session))
 			tmux("rename-window -t {}:{} {}".format(args.session,wcnt,host))
 			tmux("set-window-option -t {}:{} allow-rename off".format(args.session,wcnt))
 
@@ -76,6 +76,7 @@ def main():
 		tmux("select-layout -t {}:{} tiled".format(args.session,wcnt))
 
 	if madeNewWindow and args.sync:
+		logger.debug('synchronizing last window')
 		tmux("set-option -t {}:{} synchronize-panes".format(args.session,wcnt))
 
 	# remove session 0 - which is not connected to anything
