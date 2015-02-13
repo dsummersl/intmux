@@ -13,8 +13,8 @@ Usage:
 Help:
 
     › sshmux -h
-    usage: sshmux [-h] [--input [INPUT]] [--log LOG] [--panes PANES]
-                  [--session SESSION] [--sync]
+    usage: sshmux [-h] [--input [INPUT]] [--log LOG] [--options OPTIONS]
+                  [--panes PANES] [--session SESSION] [--sync]
                   [hosts [hosts ...]]
 
     Connect to several hosts with SSH in a new tmux session.
@@ -27,6 +27,8 @@ Help:
       --input [INPUT], -i [INPUT]
                             Read list of hosts from input file.
       --log LOG, -l LOG     Log level (default: WARN)
+      --options OPTIONS, -o OPTIONS
+                            Options to pass to ssh command.
       --panes PANES, -p PANES
                             Max SSH panes per window (default: 6)
       --session SESSION, -s SESSION
@@ -38,4 +40,4 @@ Installation
 
 Execute:
 
-  sudo python setup.py install
+    sudo python setup.py install
