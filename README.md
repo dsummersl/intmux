@@ -12,9 +12,8 @@ Usage:
 
 Help:
 
-    › sshmux -h
-    usage: sshmux [-h] [--input [INPUT]] [--log LOG] [--options OPTIONS]
-                  [--panes PANES] [--session SESSION] [--sync]
+    usage: sshmux [-h] [--command COMMAND] [--input [INPUT]] [--log LOG]
+                  [--options OPTIONS] [--panes PANES] [--session SESSION] [--sync]
                   [hosts [hosts ...]]
 
     Connect to several hosts with SSH in a new tmux session.
@@ -24,6 +23,8 @@ Help:
 
     optional arguments:
       -h, --help            show this help message and exit
+      --command COMMAND, -c COMMAND
+                            Command to execute when connecting to a remote host
       --input [INPUT], -i [INPUT]
                             Read list of hosts from input file.
       --log LOG, -l LOG     Log level (default: WARN)
