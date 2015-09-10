@@ -22,6 +22,7 @@ def main():
 	parser = argparse.ArgumentParser(
 		description="Connect to several hosts with SSH in a new tmux session."
 	)
+	parser.add_argument('--command','-c',default="", help="Command to execute when connecting to a remote host")
 	parser.add_argument('--input','-i',nargs='?',type=argparse.FileType('r'),default=None,help="Read list of hosts from input file.")
 	parser.add_argument('--log','-l',default="WARN", help="Log level (default: WARN)")
 	parser.add_argument('--options','-o',default="", help="Options to pass to ssh command.")
@@ -73,6 +74,8 @@ def main():
 			tmux("set-window-option -t {}:{} allow-rename off".format(args.session,wcnt))
 
 		tmux("send-keys -t {}:{} \"ssh {} {}\" C-m".format(args.session,wcnt,args.options,host))
+		if args.command:
+			tmux("send-keys -t {}:{} {} C-m".format(args.session,wcnt,args.command))
 		tmux("select-layout -t {}:{} tiled".format(args.session,wcnt))
 
 	if madeNewWindow and args.sync:
