@@ -13,7 +13,8 @@ Usage:
 Help:
 
     usage: sshmux [-h] [--command COMMAND] [--input [INPUT]] [--log LOG]
-                  [--options OPTIONS] [--panes PANES] [--session SESSION] [--sync]
+                  [--options OPTIONS] [--panes PANES] [--script SCRIPT] [--sync]
+                  [--tmux TMUX]
                   [hosts [hosts ...]]
 
     Connect to several hosts with SSH in a new tmux session.
@@ -32,9 +33,10 @@ Help:
                             Options to pass to ssh command.
       --panes PANES, -p PANES
                             Max SSH panes per window (default: 6)
-      --session SESSION, -s SESSION
-                            tmux session name (default: shmux)
+      --script SCRIPT, -s SCRIPT
+                            Execute commands in local file remotely
       --sync, -S            Run set-option synchronize-panes on each tmux window
+      --tmux TMUX, -t TMUX  tmux session name (default: sshmux)
 
 Installation
 ------------
