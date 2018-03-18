@@ -1,9 +1,8 @@
 Introduction
 ============
 
-A simple command line application to connect to multiple hosts within one tmux
-session. Useful for executing the same command across multiple hosts, for
-example.
+A command line application to connect to multiple hosts within one tmux session.
+Useful for executing the same command across multiple hosts, for example.
 
 Usage:
 
