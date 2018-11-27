@@ -67,7 +67,7 @@ def main():
     cnt = 0
     wcnt = 0
     first = 1
-    madeNewWindow = True
+    made_new_window = True
     for host in hosts:
         logger.debug('Host = {}'.format(host))
         if cnt < args.panes or args.panes == 0:
@@ -76,10 +76,10 @@ def main():
             first = 0
             cnt = cnt + 1
         else:
-            if madeNewWindow and args.sync:
+            if made_new_window and args.sync:
                 tmux("set-option -t {}:{} synchronize-panes".format(args.tmux, wcnt))
-                madeNewWindow = False
-            madeNewWindow = True
+                made_new_window = False
+            made_new_window = True
             cnt = cnt + 1
             wcnt = wcnt + 1
             cnt = 1
@@ -104,11 +104,19 @@ def main():
 
         tmux("select-layout -t {}:{} tiled".format(args.tmux, wcnt))
 
-    if madeNewWindow and args.sync:
+    if made_new_window and args.sync:
         logger.debug('synchronizing last window')
         tmux("set-option -t {}:{} synchronize-panes".format(args.tmux, wcnt))
 
     # remove session 0 - which is not connected to anything
     # TODO provide a hotkey to run in all sessions
 
-    tmux("attach-session -t {}:{}".format(args.tmux, wcnt))
+    # Detect if we are already in a session. If we are, just switch to the other
+    # session:
+    if 'TMUX' in os.environ:
+        # When quitting out of this session, just switch to some other client
+        # (since there appears to be one already)
+        tmux("set-option -g detach-on-destroy off")
+        tmux("switch-client -t {}:{}".format(args.tmux, wcnt))
+    else:
+        tmux("attach-session -t {}:{}".format(args.tmux, wcnt))
