@@ -8,7 +8,7 @@ import sys
 
 from . import connections
 
-logger = logging.getLogger('sshmux')
+logger = logging.getLogger('intmux')
 
 
 def tmux(command):
@@ -46,7 +46,7 @@ def main():
         '--sync', '-S', action='store_true',
         help="Run set-option synchronize-panes on each tmux window")
     parser.add_argument(
-        '--tmux', '-t', default='sshmux', help="tmux session name (default: sshmux)")
+        '--tmux', '-t', default='intmux', help="tmux session name (default: intmux)")
 
     subparsers = parser.add_subparsers(help='sub-command help', dest='subcommand')
 
@@ -63,15 +63,29 @@ def main():
 
     args = parser.parse_args()
     logging.basicConfig(level=getattr(logging, args.log))
-    hosts = args.hosts
+
+    if not args.subcommand:
+        print('You must supply a subcommand.')
+        sys.exit(1)
+
+    if args.subcommand == 'ssh':
+        connection_type = connections.SSHConnection
+    elif args.subcommand == 'docker':
+        connection_type = connections.DockerConnection
+    else:
+        print('Unknown subcommand type!')
+        sys.exit(1)
 
     if args.input:
         hosts = []
         for line in args.input.readlines():
             hosts.append(line[:-1])
-    elif len(args.hosts) == 0:
+    elif not args.input:
         print("At least one host must be specified!\n")
         sys.exit(1)
+
+    # TODO put into hosts location
+    hosts = args.hosts
 
     new_session(args.tmux)
 
@@ -104,14 +118,6 @@ def main():
 
         if args.script and not os.path.exists(args.script):
             print("{} does not exist!".format(args.script))
-            sys.exit(1)
-
-        if args.subcommand == 'ssh':
-            connection_type = connections.SSHConnection
-        elif args.subcommand == 'docker':
-            connection_type = connections.DockerConnection
-        else:
-            print('Unknown subcommand type!')
             sys.exit(1)
 
         if args.script:

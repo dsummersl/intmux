@@ -1,25 +1,28 @@
 Introduction
 ============
 
-A command line application to connect to multiple hosts within one tmux session.
-Useful for executing the same command across multiple hosts, for example.
+A command line application to connect to multiple hosts within a tmux session.
 
 Usage:
 
-    sshmux host1 user@host2
-    sshmux -i inputfile.txt
+    intmux ssh host1 user@host2
+    intmux -i inputfile.txt ssh
 
 Help:
 
-    usage: sshmux [-h] [--command COMMAND] [--input [INPUT]] [--log LOG]
-                  [--options OPTIONS] [--panes PANES] [--script SCRIPT] [--sync]
-                  [--tmux TMUX]
-                  [hosts [hosts ...]]
+    intmux --help
 
-    Connect to several hosts with SSH in a new tmux session.
+    usage: intmux [-h] [--command COMMAND] [--input [INPUT]] [--log LOG]
+                  [--panes PANES] [--script SCRIPT] [--sync] [--tmux TMUX]
+                  {ssh,docker,compose} ...
+
+    Connect to several hosts in a tmux session.
 
     positional arguments:
-      hosts                 Host names to connect to
+      {ssh,docker,compose}  sub-command help
+        ssh                 Connect to hosts via SSH
+        docker              Connect to docker containers
+        compose             Connect to docker containers via docker-compose
 
     optional arguments:
       -h, --help            show this help message and exit
@@ -28,14 +31,12 @@ Help:
       --input [INPUT], -i [INPUT]
                             Read list of hosts from input file.
       --log LOG, -l LOG     Log level (default: WARN)
-      --options OPTIONS, -o OPTIONS
-                            Options to pass to ssh command.
       --panes PANES, -p PANES
-                            Max SSH panes per window (default: 6)
+                            Max panes per window (default: 6)
       --script SCRIPT, -s SCRIPT
                             Execute commands in local file remotely
       --sync, -S            Run set-option synchronize-panes on each tmux window
-      --tmux TMUX, -t TMUX  tmux session name (default: sshmux)
+      --tmux TMUX, -t TMUX  tmux session name (default: intmux)
 
 Installation
 ------------

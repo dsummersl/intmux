@@ -10,8 +10,8 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
-    name='sshmux',
-    version='0.3.0',
+    name='intmux',
+    version='0.4.0',
     author='Dane Summers',
     license='MIT',
     include_package_data=True,
@@ -19,15 +19,13 @@ setup(
     long_description=long_description,
     long_description_content_type='text/markdown',
     keywords='ssh tmux docker',
-    url='https://github.com/dsummersl/sshmux',
+    url='https://github.com/dsummersl/intmux',
     py_modules=[],
     install_requires=[],
     packages=[
         'scripts'
     ],
     entry_points={
-        'console_scripts': [
-          'sshmux = scripts.sshmux:main'
-        ]
+        'console_scripts': ['intmux = scripts.intmux:main']
     }
 )
