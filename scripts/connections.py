@@ -1,7 +1,15 @@
 import logging
+import posix
 import subprocess
+import sys
 
 logger = logging.getLogger('connections')
+
+
+def check_output_as_list(command):
+    logger.debug(command)
+    output = subprocess.check_output([command], shell=True)
+    return str(output, 'utf-8').split('\n')
 
 
 class Connection(object):
@@ -23,7 +31,7 @@ class SSHConnection(Connection):
     def hosts(cls, args):
         if len(args.hosts) == 0:
             print("At least one host must be specified!\n")
-            sys.exit(1)
+            sys.exit(posix.EX_USAGE)
         return args.hosts
 
     @classmethod
@@ -40,9 +48,8 @@ class DockerConnection(Connection):
     def hosts(cls, args):
         hosts = args.hosts
         if len(hosts) == 0:
-            logger.debug('docker ps -q')
-            output = subprocess.check_output(['docker ps -q'], shell=True)
-            hosts = str(output, 'utf-8').split('\n')
+            command = 'docker ps -q'
+            hosts = check_output_as_list(command)
             hosts = [h for h in hosts if len(h) > 0]
 
         logger.debug("hosts = {0}".format(hosts))

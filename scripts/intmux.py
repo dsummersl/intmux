@@ -1,8 +1,7 @@
-from __future__ import print_function
-
 import argparse
 import logging
 import os.path
+import posix
 import subprocess
 import sys
 
@@ -20,7 +19,11 @@ def tmux(command):
 
 def new_session(session):
     """ Create a new tmux session"""
-    # TODO verify that the session doesn't already exist.
+    sessions = connections.check_output_as_list('tmux list-sessions -F "#S"')
+    if session in sessions:
+        print("Session '{}' already exists!".format(session))
+        sys.exit(posix.EX_USAGE)
+
     command = "tmux new-session -d -s '{}'".format(session)
     logger.debug('new_session "{}"'.format(command))
     subprocess.check_call([command], shell=True)
@@ -69,7 +72,7 @@ def main():
 
     if not args.subcommand:
         print('You must supply a subcommand.')
-        sys.exit(1)
+        sys.exit(posix.EX_USAGE)
 
     if args.subcommand == 'ssh':
         connection_type = connections.SSHConnection
@@ -77,12 +80,14 @@ def main():
         connection_type = connections.DockerConnection
     else:
         print('Unknown subcommand type!')
-        sys.exit(1)
+        sys.exit(posix.EX_USAGE)
 
+    hosts = []
     if args.input:
-        hosts = []
         for line in args.input.readlines():
             hosts.append(line[:-1])
+    else:
+        hosts = connection_type.hosts(args)
 
     new_session(args.tmux)
 
@@ -94,7 +99,7 @@ def main():
     wcnt = 0
     first = 1
     made_new_window = True
-    for host in connection_type.hosts(args):
+    for host in hosts:
         logger.debug('Host = {}'.format(host))
         if cnt < args.panes or args.panes == 0:
             if first == 0:
@@ -115,7 +120,7 @@ def main():
 
         if args.script and not os.path.exists(args.script):
             print("{} does not exist!".format(args.script))
-            sys.exit(1)
+            sys.exit(posix.EX_USAGE)
 
         if args.script:
             tmux("send-keys -t {}:{} \"{}\" C-m".format(
