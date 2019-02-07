@@ -35,7 +35,16 @@ also be connected to:
 
     intmux compose
 
-**Help**
+
+Installation
+------------
+
+Execute:
+
+    pip install intmux
+
+Help
+----
 
     intmux --help
 
@@ -64,10 +73,3 @@ also be connected to:
                             Execute commands in local file remotely
       --sync, -S            Run set-option synchronize-panes on each tmux window
       --tmux TMUX, -t TMUX  tmux session name (default: intmux)
-
-Installation
-------------
-
-Execute:
-
-    sudo python setup.py install
