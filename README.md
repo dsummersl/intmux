@@ -3,12 +3,39 @@ Introduction
 
 A command line application to connect to multiple hosts within a tmux session.
 
-Usage:
+Supports connections to SSH hosts, local docker and docker-compose.
+
+**SSH**
+
+By default intmux will open up to six hosts in a new tmux session. For example,
+the following command creates a new tmux session with two windows (one ssh'd to
+host1, another to user@host2):
 
     intmux ssh host1 user@host2
     intmux -i inputfile.txt ssh
 
-Help:
+One could use the `--sync` option to enable tmux's 'synchronized-panes' setting:
+
+    intmux --sync ssh host1 host2 host3
+
+**Docker**
+
+intmux can also be used to connect to all running docker instances:
+
+    intmux docker
+
+Or connect to specific containers:
+
+    intmux docker a7e8a0b392ea f947ff94a995
+
+**Docker-compose**
+
+All running services of the docker-compose in your current working directory can
+also be connected to:
+
+    intmux compose
+
+**Help**
 
     intmux --help
 
