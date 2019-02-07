@@ -9,7 +9,10 @@ logger = logging.getLogger('connections')
 def check_output_as_list(command):
     logger.debug(command)
     output = subprocess.check_output([command], shell=True)
-    return str(output, 'utf-8').split('\n')
+    lines = str(output, 'utf-8').split('\n')
+    lines = [line for line in lines if len(line) > 0]
+    logger.debug(lines)
+    return lines
 
 
 class Connection(object):
@@ -50,9 +53,12 @@ class DockerConnection(Connection):
         if len(hosts) == 0:
             command = 'docker ps -q'
             hosts = check_output_as_list(command)
-            hosts = [h for h in hosts if len(h) > 0]
 
         logger.debug("hosts = {0}".format(hosts))
+
+        if len(hosts) == 0:
+            print("No docker containers detected to connect to!")
+            sys.exit(posix.EX_USAGE)
 
         return hosts
 
@@ -63,3 +69,21 @@ class DockerConnection(Connection):
     @classmethod
     def connect(cls, host, args):
         return 'docker exec -it {} {}'.format(host, args.shell)
+
+
+class DockerComposeConnection(DockerConnection):
+    @classmethod
+    def hosts(cls, args):
+        containers = check_output_as_list('docker-compose ps --filter="status=running" --services')
+
+        hosts = []
+        for name in containers:
+            container = check_output_as_list('docker-compose ps -q {}'.format(name))
+            if len(container) == 1:
+                hosts.append(container[0])
+
+        if len(hosts) == 0:
+            print("No running docker containers detected to connect to!")
+            sys.exit(posix.EX_USAGE)
+
+        return hosts

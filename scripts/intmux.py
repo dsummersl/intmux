@@ -53,19 +53,29 @@ def main():
 
     subparsers = parser.add_subparsers(help='sub-command help', dest='subcommand')
 
-    ssh_parser = subparsers.add_parser('ssh', help='Connect to hosts via SSH')
+    ssh_parser = subparsers.add_parser(
+        'ssh', help='Connect to hosts via SSH',
+        description='Connect to the provided hosts.')
     ssh_parser.add_argument(
         '--options', '-o', default="", help="Options to pass to connection.")
     ssh_parser.add_argument('hosts', nargs='*', help="Host names to connect to")
 
-    docker_parser = subparsers.add_parser('docker', help='Connect to docker containers')
-    docker_parser.add_argument('--shell', default='sh', help='Command to execute on docker container (default: sh)')
+    docker_parser = subparsers.add_parser(
+        'docker', help='Connect to docker containers',
+        description='Connect to the provided running containers')
+    docker_parser.add_argument(
+        '--shell', default='sh', help='Command to execute on docker container (default: sh)')
     docker_parser.add_argument(
         'hosts', nargs='*',
         help="List of docker containers to connect to (default: connect to all local docker containers)")
 
-    compose_parser = subparsers.add_parser('compose', help='Connect to docker containers via docker-compose')
-    compose_parser.add_argument('hosts', nargs='*', help="docker-compose hosts to connect to.")
+    composer_parser = subparsers.add_parser(
+        'compose', help='Connect to docker containers via docker-compose',
+        description=(
+            'Connect to all running containers associated with the docker-compose '
+            'in the current directory.'))
+    composer_parser.add_argument(
+        '--shell', default='sh', help='Command to execute on docker container (default: sh)')
 
     args = parser.parse_args()
     logging.basicConfig(level=getattr(logging, args.log))
@@ -78,6 +88,8 @@ def main():
         connection_type = connections.SSHConnection
     elif args.subcommand == 'docker':
         connection_type = connections.DockerConnection
+    elif args.subcommand == 'compose':
+        connection_type = connections.DockerComposeConnection
     else:
         print('Unknown subcommand type!')
         sys.exit(posix.EX_USAGE)
@@ -88,6 +100,10 @@ def main():
             hosts.append(line[:-1])
     else:
         hosts = connection_type.hosts(args)
+
+    if len(hosts) == 0:
+        print("At least one host must be specified!\n")
+        sys.exit(posix.EX_USAGE)
 
     new_session(args.tmux)
 
