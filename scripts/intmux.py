@@ -56,7 +56,10 @@ def main():
     ssh_parser.add_argument('hosts', nargs='*', help="Host names to connect to")
 
     docker_parser = subparsers.add_parser('docker', help='Connect to docker containers')
-    docker_parser.add_argument('hosts', nargs='*', help="Docker containers to connect to")
+    docker_parser.add_argument('--shell', default='sh', help='Command to execute on docker container (default: sh)')
+    docker_parser.add_argument(
+        'hosts', nargs='*',
+        help="List of docker containers to connect to (default: connect to all local docker containers)")
 
     compose_parser = subparsers.add_parser('compose', help='Connect to docker containers via docker-compose')
     compose_parser.add_argument('hosts', nargs='*', help="docker-compose hosts to connect to.")
@@ -80,12 +83,6 @@ def main():
         hosts = []
         for line in args.input.readlines():
             hosts.append(line[:-1])
-    elif not args.input:
-        print("At least one host must be specified!\n")
-        sys.exit(1)
-
-    # TODO put into hosts location
-    hosts = args.hosts
 
     new_session(args.tmux)
 
@@ -97,7 +94,7 @@ def main():
     wcnt = 0
     first = 1
     made_new_window = True
-    for host in hosts:
+    for host in connection_type.hosts(args):
         logger.debug('Host = {}'.format(host))
         if cnt < args.panes or args.panes == 0:
             if first == 0:
