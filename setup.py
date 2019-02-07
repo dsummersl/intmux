@@ -11,14 +11,14 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='sshmux',
-    version='0.2.0',
+    version='0.3.0',
     author='Dane Summers',
     license='MIT',
     include_package_data=True,
-    description='SSH to multiple hosts simultaneously with tmux.',
+    description='Connect to multiple hosts simultaneously with tmux.',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    keywords='ssh tmux',
+    keywords='ssh tmux docker',
     url='https://github.com/dsummersl/sshmux',
     py_modules=[],
     install_requires=[],

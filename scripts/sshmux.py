@@ -1,9 +1,12 @@
 from __future__ import print_function
+
 import argparse
 import logging
 import os.path
 import subprocess
 import sys
+
+from . import connections
 
 logger = logging.getLogger('sshmux')
 
@@ -25,8 +28,9 @@ def new_session(session):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Connect to several hosts with SSH in a new tmux session."
+        description="Connect to several hosts in a tmux session."
     )
+
     parser.add_argument(
         '--command', '-c', default="", help="Command to execute when connecting to a remote host")
     parser.add_argument(
@@ -35,9 +39,7 @@ def main():
     parser.add_argument(
         '--log', '-l', default="WARN", help="Log level (default: WARN)")
     parser.add_argument(
-        '--options', '-o', default="", help="Options to pass to ssh command.")
-    parser.add_argument(
-        '--panes', '-p', default=6, help="Max SSH panes per window (default: 6)")
+        '--panes', '-p', default=6, help="Max panes per window (default: 6)")
     parser.add_argument(
         '--script', '-s', default="", help="Execute commands in local file remotely")
     parser.add_argument(
@@ -45,7 +47,20 @@ def main():
         help="Run set-option synchronize-panes on each tmux window")
     parser.add_argument(
         '--tmux', '-t', default='sshmux', help="tmux session name (default: sshmux)")
-    parser.add_argument('hosts', nargs='*', help="Host names to connect to")
+
+    subparsers = parser.add_subparsers(help='sub-command help', dest='subcommand')
+
+    ssh_parser = subparsers.add_parser('ssh', help='Connect to hosts via SSH')
+    ssh_parser.add_argument(
+        '--options', '-o', default="", help="Options to pass to connection.")
+    ssh_parser.add_argument('hosts', nargs='*', help="Host names to connect to")
+
+    docker_parser = subparsers.add_parser('docker', help='Connect to docker containers')
+    docker_parser.add_argument('hosts', nargs='*', help="Docker containers to connect to")
+
+    compose_parser = subparsers.add_parser('compose', help='Connect to docker containers via docker-compose')
+    compose_parser.add_argument('hosts', nargs='*', help="docker-compose hosts to connect to.")
+
     args = parser.parse_args()
     logging.basicConfig(level=getattr(logging, args.log))
     hosts = args.hosts
@@ -90,10 +105,21 @@ def main():
         if args.script and not os.path.exists(args.script):
             print("{} does not exist!".format(args.script))
             sys.exit(1)
-        if args.script:
-            tmux("send-keys -t {}:{} \"scp {} {} {}:/tmp\" C-m".format(args.tmux, wcnt, args.options, args.script, host))
 
-        tmux("send-keys -t {}:{} \"ssh {} {}\" C-m".format(args.tmux, wcnt, args.options, host))
+        if args.subcommand == 'ssh':
+            connection_type = connections.SSHConnection
+        elif args.subcommand == 'docker':
+            connection_type = connections.DockerConnection
+        else:
+            print('Unknown subcommand type!')
+            sys.exit(1)
+
+        if args.script:
+            tmux("send-keys -t {}:{} \"{}\" C-m".format(
+                args.tmux, wcnt, connection_type.copy(host, args)))
+
+        tmux("send-keys -t {}:{} \"{}\" C-m".format(
+            args.tmux, wcnt, connection_type.connect(host, args)))
 
         if args.command:
             tmux("send-keys -t {}:{} {} C-m".format(args.tmux, wcnt, args.command))
