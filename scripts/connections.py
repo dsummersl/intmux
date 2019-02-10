@@ -68,7 +68,10 @@ class DockerConnection(Connection):
 
     @classmethod
     def connect(cls, host, args):
-        return 'docker exec -it {} {}'.format(host, args.shell)
+        if args.attach:
+            return 'docker attach {}'.format(host)
+        else:
+            return 'docker exec -it {} {}'.format(host, args.shell)
 
 
 class DockerComposeConnection(DockerConnection):

@@ -19,7 +19,7 @@ setup(
     ],
     license='MIT',
     include_package_data=True,
-    description='Connect to multiple hosts simultaneously in tmux via ssh and docker.',
+    description='Connect to multiple hosts simultaneously "in tmux" via ssh and docker.',
     long_description=long_description,
     long_description_content_type='text/markdown',
     keywords='ssh tmux docker cli',

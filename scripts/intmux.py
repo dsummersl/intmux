@@ -20,7 +20,7 @@ def main():
         '--command', '-c', default="",
         help="Command to execute when connecting to a remote host")
     parser.add_argument(
-        '--input', '-i', nargs='?', type=argparse.FileType('r'), default=None,
+        '--input', '-i', type=argparse.FileType('r'), default=None,
         help="Read list of hosts from input file when provided, otherwise from STDIN.")
     parser.add_argument(
         '--script', '-s', default="",
@@ -46,21 +46,29 @@ def main():
     ssh_parser.add_argument('hosts', nargs='*', help="Host names to connect to")
 
     docker_parser = subparsers.add_parser(
-        'docker', help='Connect to docker containers',
+        'docker', help="Connect to docker containers via 'docker exec'",
         description='Connect to the provided running containers')
     docker_parser.add_argument(
-        '--shell', default='sh', help='Command to execute on docker container (default: sh)')
+        '--shell', default='bash',
+        help='Command to execute on docker container (default: bash)')
+    docker_parser.add_argument(
+        '--attach', '-a', action='store_true',
+        help="Run 'docker attach' instead of 'docker exec'")
     docker_parser.add_argument(
         'hosts', nargs='*',
-        help="List of docker containers to connect to (default: connect to all local docker containers)")
+        help=('List of docker containers to connect to (default: connect to all docker containers)'))
 
     composer_parser = subparsers.add_parser(
-        'compose', help='Connect to docker containers via docker-compose',
+        'compose', help="Connect to docker containers associated with current docker-compose via 'docker exec'",
         description=(
             'Connect to all running containers associated with the docker-compose '
             'in the current directory.'))
     composer_parser.add_argument(
-        '--shell', default='sh', help='Command to execute on docker container (default: sh)')
+        '--attach', '-a', action='store_true',
+        help="Run 'docker attach' instead of 'docker exec'")
+    composer_parser.add_argument(
+        '--shell', default='bash',
+        help='Command to execute on docker container (default: bash)')
 
     args = parser.parse_args()
     logging.basicConfig(level=getattr(logging, args.log))
