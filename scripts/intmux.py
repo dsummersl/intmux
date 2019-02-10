@@ -69,6 +69,9 @@ def main():
     composer_parser.add_argument(
         '--shell', default='bash',
         help='Command to execute on docker container (default: bash)')
+    composer_parser.add_argument(
+        'hosts', nargs='*',
+        help=('List of docker containers to connect to (default: connect to all docker-compose containers)'))
 
     args = parser.parse_args()
     logging.basicConfig(level=getattr(logging, args.log))

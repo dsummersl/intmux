@@ -78,9 +78,21 @@ class DockerComposeConnection(DockerConnection):
     @classmethod
     def hosts(cls, args):
         containers = check_output_as_list('docker-compose ps --filter="status=running" --services')
+        logger.debug('containers = "{}"'.format(containers))
+
+        filtered_hosts = []
+        for host in args.hosts:
+            logger.debug('filtered_name = "{}"'.format(host))
+            if host not in containers:
+                print("No such service '{}' in {}".format(host, containers))
+                sys.exit(posix.EX_USAGE)
+            filtered_hosts.append(host)
+        logger.debug('filtered_hosts = "{}"'.format(filtered_hosts))
 
         hosts = []
         for name in containers:
+            if len(filtered_hosts) > 0 and name not in filtered_hosts:
+                continue
             container = check_output_as_list('docker-compose ps -q {}'.format(name))
             if len(container) == 1:
                 hosts.append(container[0])
