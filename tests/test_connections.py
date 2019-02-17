@@ -60,3 +60,36 @@ class TestDockerConnection:
 
         args.hosts = ['ne', 'blah']
         assert ['containerid1'] == connections.DockerConnection.hosts(args)
+
+
+@patch('scripts.connections.check_output_as_list')
+class TestDockerComposeConnection:
+    compose_containers = ['one', 'two']
+
+    def _setup_sife_effect(self, output_mock):
+        def side_effect(*args, **kwargs):
+            if args[0] == 'docker-compose ps --filter="status=running" --services':
+                return self.compose_containers
+            if args[0] == 'docker-compose ps -q one':
+                return ['containerid1']
+            if args[0] == 'docker-compose ps -q two':
+                return ['containerid2']
+        output_mock.side_effect = side_effect
+
+    def test_hosts_approximate(self, output_mock):
+        args = MagicMock()
+        args.hosts = ['ne']
+        args.approximate = True
+
+        self._setup_sife_effect(output_mock)
+        assert ['containerid1'] == connections.DockerComposeConnection.hosts(args)
+
+        args.hosts = ['o']
+        assert ['containerid1', 'containerid2'] == connections.DockerComposeConnection.hosts(args)
+
+        args.hosts = ['blah']
+        with pytest.raises(ValueError):
+            connections.DockerComposeConnection.hosts(args)
+
+        args.hosts = ['ne', 'blah']
+        assert ['containerid1'] == connections.DockerComposeConnection.hosts(args)

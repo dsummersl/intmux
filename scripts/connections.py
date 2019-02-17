@@ -94,12 +94,15 @@ class DockerComposeConnection(DockerConnection):
         logger.debug('containers = "{}"'.format(containers))
 
         filtered_hosts = []
-        for host in args.hosts:
-            logger.debug('filtered_name = "{}"'.format(host))
-            if host not in containers:
-                raise ValueError("No such service '{}' in {}".format(host, containers))
-            filtered_hosts.append(host)
+        for container_name in containers:
+            if container_name in args.hosts:
+                filtered_hosts.append(container_name)
+            elif args.approximate and any(h in container_name for h in args.hosts):
+                filtered_hosts.append(container_name)
+
         logger.debug('filtered_hosts = "{}"'.format(filtered_hosts))
+        if len(filtered_hosts) == 0:
+            raise ValueError("No service found in {}".format(containers))
 
         hosts = []
         for name in containers:

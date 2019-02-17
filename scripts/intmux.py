@@ -8,6 +8,21 @@ from . import tmux
 logger = logging.getLogger('intmux')
 
 
+def add_docker_options(subparser):
+    subparser.add_argument(
+        '--docker-command', '-dc', default='exec -it {} bash',
+        help=(
+            "Docker command to execute (default: 'exec -it {} bash'). If '{}' "
+            "is included in the command, the docker host is substituted there, "
+            "the host is appended."))
+    subparser.add_argument(
+        '--approximate', '-a', action='store_true',
+        help='Include docker container names that only partially match hosts.')
+    subparser.add_argument(
+        'hosts', nargs='*',
+        help=('List of docker containers to connect to (default: connect to all containers)'))
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Connect to several hosts in a tmux session."
@@ -48,36 +63,14 @@ def main():
     docker_parser = subparsers.add_parser(
         'docker', help="Connect to docker containers via 'docker exec'",
         description='Connect to the provided running containers')
-    docker_parser.add_argument(
-        '--docker-command', '-dc', default='exec -it {} bash',
-        help=(
-            "Docker command to execute (default: 'exec -it {} bash'). If '{}' "
-            "is included in the command, the docker host is substituted there, "
-            "the host is appended."))
-    docker_parser.add_argument(
-        '--approximate', '-a', action='store_true',
-        help='Include docker container names that only partially match hosts.')
-    docker_parser.add_argument(
-        'hosts', nargs='*',
-        help=('List of docker containers to connect to (default: connect to all docker containers)'))
+    add_docker_options(docker_parser)
 
     composer_parser = subparsers.add_parser(
         'compose', help="Connect to docker containers associated with current docker-compose via 'docker exec'",
         description=(
             'Connect to all running containers associated with the docker-compose '
             'in the current directory.'))
-    composer_parser.add_argument(
-        '--docker-command', '-dc', default='exec -it {} bash',
-        help=(
-            "Docker command to execute (default: 'exec -it {} bash'). If '{}' "
-            "is included in the command, the docker host is substituted there, "
-            "the host is appended."))
-    composer_parser.add_argument(
-        '--approximate', '-a', action='store_true',
-        help='Include docker container names that only partially match hosts.')
-    composer_parser.add_argument(
-        'hosts', nargs='*',
-        help=('List of docker containers to connect to (default: connect to all docker-compose containers)'))
+    add_docker_options(composer_parser)
 
     args = parser.parse_args()
     logging.basicConfig(level=getattr(logging, args.log))
