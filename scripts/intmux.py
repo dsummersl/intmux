@@ -14,7 +14,8 @@ def add_docker_options(subparser, include_hosts=True):
         help=(
             "Docker command to execute (default: 'exec -it {} bash'). If '{}' "
             "is included in the command, the docker host is substituted there, "
-            "the host is appended."))
+            "the host is appended. NOTE: may invalidate any --script/--command "
+            "parameters if a shell is not provided."))
     subparser.add_argument(
         '--approximate', '-a', action='store_true',
         help='Include any docker container names that only partially match hosts.')

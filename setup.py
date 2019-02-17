@@ -11,7 +11,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='intmux',
-    version='0.5.0',
+    version='0.6.0',
     author='Dane Summers',
     classifiers=[
         "Programming Language :: Python :: 3",
