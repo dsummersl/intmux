@@ -48,6 +48,8 @@ class TmuxSession(object):
             self.connection_type = connections.DockerConnection
         elif args.subcommand == 'compose':
             self.connection_type = connections.DockerComposeConnection
+        elif args.subcommand == 'ssh-docker':
+            self.connection_type = connections.SSHDockerConnection
         else:
             print('Unknown subcommand type!')
             sys.exit(posix.EX_USAGE)
@@ -80,7 +82,8 @@ class TmuxSession(object):
         made_new_window = True
         for host in self.hosts:
             logger.debug('Host = {}'.format(host))
-            if cnt < self.panes or self.panes == 0:
+            # if hostname is '\n' then make a new window
+            if host != '\n' and (cnt < self.panes or self.panes == 0):
                 if first == 0:
                     tmux("split-window -t {}".format("{}:{}".format(self.session, wcnt)))
                 first = 0
@@ -90,7 +93,6 @@ class TmuxSession(object):
                     tmux("set-option -t {}:{} synchronize-panes".format(self.session, wcnt))
                     made_new_window = False
                 made_new_window = True
-                cnt = cnt + 1
                 wcnt = wcnt + 1
                 cnt = 1
                 tmux("new-window -t {}".format(self.session))

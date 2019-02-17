@@ -8,7 +8,7 @@ from . import tmux
 logger = logging.getLogger('intmux')
 
 
-def add_docker_options(subparser):
+def add_docker_options(subparser, include_hosts=True):
     subparser.add_argument(
         '--docker-command', '-dc', default='exec -it {} bash',
         help=(
@@ -17,10 +17,17 @@ def add_docker_options(subparser):
             "the host is appended."))
     subparser.add_argument(
         '--approximate', '-a', action='store_true',
-        help='Include docker container names that only partially match hosts.')
+        help='Include any docker container names that only partially match hosts.')
+    if include_hosts:
+        subparser.add_argument(
+            'hosts', nargs='*',
+            help=('List of docker containers to connect to (default: connect to all containers)'))
+
+
+def add_ssh_options(subparser):
     subparser.add_argument(
-        'hosts', nargs='*',
-        help=('List of docker containers to connect to (default: connect to all containers)'))
+        '--ssh-options', '-so', default="", help="Options to pass to SSH connection.")
+    subparser.add_argument('hosts', nargs='*', help="SSH hosts to connect to.")
 
 
 def main():
@@ -56,19 +63,28 @@ def main():
     ssh_parser = subparsers.add_parser(
         'ssh', help='Connect to hosts via SSH',
         description='Connect to the provided hosts.')
-    ssh_parser.add_argument(
-        '--options', '-o', default="", help="Options to pass to connection.")
-    ssh_parser.add_argument('hosts', nargs='*', help="Host names to connect to")
+    add_ssh_options(ssh_parser)
 
     docker_parser = subparsers.add_parser(
         'docker', help="Connect to docker containers via 'docker exec'",
         description='Connect to the provided running containers')
     add_docker_options(docker_parser)
 
+    ssh_docker_parser = subparsers.add_parser(
+        'ssh-docker', help="Connect to docker containers on remote SSH hosts",
+        description='Connect to docker containers on provided SSH hosts')
+    add_ssh_options(ssh_docker_parser)
+    ssh_docker_parser.add_argument(
+        '--docker-containers', '-dC',
+        help=(
+            'Comma separated list of docker containers to connect to '
+            '(default: connect to all containers)'))
+    add_docker_options(ssh_docker_parser, include_hosts=False)
+
     composer_parser = subparsers.add_parser(
         'compose', help="Connect to docker containers associated with current docker-compose via 'docker exec'",
         description=(
-            'Connect to all running containers associated with the docker-compose '
+            'Connect to containers associated with the docker-compose '
             'in the current directory.'))
     add_docker_options(composer_parser)
 
