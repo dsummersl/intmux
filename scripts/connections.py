@@ -57,7 +57,11 @@ class DockerConnection(Connection):
                 n, i = n_and_i.split(',')
                 if n in host_names:
                     hosts.append(i)
+                elif i in host_names:
+                    hosts.append(i)
                 elif args.approximate and any(name in n for name in host_names):
+                    hosts.append(i)
+                elif args.approximate and any(name in i for name in host_names):
                     hosts.append(i)
 
         logger.debug("hosts = {0}".format(hosts))

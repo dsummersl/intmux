@@ -43,13 +43,17 @@ class TestDockerConnection:
         args.hosts = ['two', 'one']
         assert ['containerid1', 'containerid2'] == connections.DockerConnection.hosts(args)
 
+        # Matches on IDs as well
+        args.hosts = ['containerid1']
+        assert ['containerid1'] == connections.DockerConnection.hosts(args)
+
     def test_hosts_approximate(self, output_mock):
         args = MagicMock()
-        args.hosts = ['ne']
+        args.hosts = ['wo']
         args.approximate = True
 
         self._setup_sife_effect(output_mock)
-        assert ['containerid1'] == connections.DockerConnection.hosts(args)
+        assert ['containerid2'] == connections.DockerConnection.hosts(args)
 
         args.hosts = ['o']
         assert ['containerid1', 'containerid2'] == connections.DockerConnection.hosts(args)
@@ -58,8 +62,8 @@ class TestDockerConnection:
         with pytest.raises(ValueError):
             connections.DockerConnection.hosts(args)
 
-        args.hosts = ['ne', 'blah']
-        assert ['containerid1'] == connections.DockerConnection.hosts(args)
+        args.hosts = ['wo', 'blah']
+        assert ['containerid2'] == connections.DockerConnection.hosts(args)
 
 
 @patch('scripts.connections.check_output_as_list')
