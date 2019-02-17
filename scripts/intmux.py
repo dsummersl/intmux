@@ -50,7 +50,7 @@ def main():
         help="Execute commands in local file remotely (executes over --command option)")
 
     parser.add_argument(
-        '--tmux-panes', '-p', default=6, metavar="PANES",
+        '--tmux-panes', '-p', default=6, type=int, metavar="PANES",
         help="Max tmux panes per window (default: 6)")
     parser.add_argument(
         '--tmux-no-sync', '-S', action='store_true',
