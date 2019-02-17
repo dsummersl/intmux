@@ -44,7 +44,7 @@ def main():
         help="Command to execute when connecting to a remote host")
     parser.add_argument(
         '--input', '-i', type=argparse.FileType('r'), default=None,
-        help="Read list of hosts from input file when provided, otherwise from STDIN.")
+        help="Read list of hosts from input file when provided.")
     parser.add_argument(
         '--script', '-s', default="",
         help="Execute commands in local file remotely (executes over --command option)")

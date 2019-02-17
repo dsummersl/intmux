@@ -105,10 +105,10 @@ Main help:
       --command COMMAND, -c COMMAND
                             Command to execute when connecting to a remote host
       --input INPUT, -i INPUT
-                            Read list of hosts from input file when provided,
-                            otherwise from STDIN.
+                            Read list of hosts from input file when provided.
       --script SCRIPT, -s SCRIPT
-                            Execute commands in local file remotely
+                            Execute commands in local file remotely (executes over
+                            --command option)
       --tmux-panes PANES, -p PANES
                             Max tmux panes per window (default: 6)
       --tmux-no-sync, -S    Do not run tmux's set-option synchronize-panes
@@ -207,3 +207,17 @@ SSH Docker help:
                             shell is not provided.
       --approximate, -a     Include any docker container names that only partially
                             match hosts.
+
+Notes
+-----
+
+`--script` and `--command` will make multiple connections over SSH (one can send
+keys over tmux, but not easily track success of without capturing the result of
+$?, so shell commands have been string together with &&). Maybe I'll fix that
+some day, but in the meantime, to limit the number of connections I suggest
+turning on SSH ControlMaster settings by adding the following to your
+.ssh/config file:
+
+    ControlMaster auto
+    ControlPersist 60s
+    ControlPath /tmp/ssh-%h-%p-%r
