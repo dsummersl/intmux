@@ -49,11 +49,14 @@ def main():
         'docker', help="Connect to docker containers via 'docker exec'",
         description='Connect to the provided running containers')
     docker_parser.add_argument(
-        '--shell', default='bash',
-        help='Command to execute on docker container (default: bash)')
+        '--docker-command', '-dc', default='exec -it {} bash',
+        help=(
+            "Docker command to execute (default: 'exec -it {} bash'). If '{}' "
+            "is included in the command, the docker host is substituted there, "
+            "the host is appended."))
     docker_parser.add_argument(
-        '--attach', '-a', action='store_true',
-        help="Run 'docker attach' instead of 'docker exec'")
+        '--approximate', '-a', action='store_true',
+        help='Include docker container names that only partially match hosts.')
     docker_parser.add_argument(
         'hosts', nargs='*',
         help=('List of docker containers to connect to (default: connect to all docker containers)'))
@@ -64,11 +67,14 @@ def main():
             'Connect to all running containers associated with the docker-compose '
             'in the current directory.'))
     composer_parser.add_argument(
-        '--attach', '-a', action='store_true',
-        help="Run 'docker attach' instead of 'docker exec'")
+        '--docker-command', '-dc', default='exec -it {} bash',
+        help=(
+            "Docker command to execute (default: 'exec -it {} bash'). If '{}' "
+            "is included in the command, the docker host is substituted there, "
+            "the host is appended."))
     composer_parser.add_argument(
-        '--shell', default='bash',
-        help='Command to execute on docker container (default: bash)')
+        '--approximate', '-a', action='store_true',
+        help='Include docker container names that only partially match hosts.')
     composer_parser.add_argument(
         'hosts', nargs='*',
         help=('List of docker containers to connect to (default: connect to all docker-compose containers)'))

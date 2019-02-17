@@ -1,7 +1,5 @@
 import logging
-import posix
 import subprocess
-import sys
 
 logger = logging.getLogger('connections')
 
@@ -9,7 +7,8 @@ logger = logging.getLogger('connections')
 def check_output_as_list(command):
     logger.debug(command)
     output = subprocess.check_output([command], shell=True)
-    lines = str(output, 'utf-8').split('\n')
+    logger.debug(output)
+    lines = output.decode('utf-8').split('\n')
     lines = [line for line in lines if len(line) > 0]
     logger.debug(lines)
     return lines
@@ -33,8 +32,7 @@ class SSHConnection(Connection):
     @classmethod
     def hosts(cls, args):
         if len(args.hosts) == 0:
-            print("At least one host must be specified!\n")
-            sys.exit(posix.EX_USAGE)
+            raise ValueError("At least one host must be specified!\n")
         return args.hosts
 
     @classmethod
@@ -49,16 +47,23 @@ class SSHConnection(Connection):
 class DockerConnection(Connection):
     @classmethod
     def hosts(cls, args):
-        hosts = args.hosts
-        if len(hosts) == 0:
-            command = 'docker ps -q'
-            hosts = check_output_as_list(command)
+        host_names = args.hosts
+        hosts = []
+        names_and_ids = check_output_as_list("docker ps --format '{{.Names}},{{.ID}}'")
+        if len(host_names) == 0:
+            hosts.extend(n_and_i.split(',')[1] for n_and_i in names_and_ids)
+        else:
+            for n_and_i in names_and_ids:
+                n, i = n_and_i.split(',')
+                if n in host_names:
+                    hosts.append(i)
+                elif args.approximate and any(name in n for name in host_names):
+                    hosts.append(i)
 
         logger.debug("hosts = {0}".format(hosts))
 
         if len(hosts) == 0:
-            print("No docker containers detected to connect to!")
-            sys.exit(posix.EX_USAGE)
+            raise ValueError("No docker containers detected to connect to!")
 
         return hosts
 
@@ -68,10 +73,18 @@ class DockerConnection(Connection):
 
     @classmethod
     def connect(cls, host, args):
-        if args.attach:
-            return 'docker attach {}'.format(host)
+        if args.docker_command:
+            if '{}' in args.docker_command:
+                # Commands like:
+                #  -dc 'exec -it {} bash'
+                return 'docker {}'.format(args.docker_command.format(host))
+            else:
+                # Commands without {} get host appended to it, like:
+                #  -dc logs
+                #  -dc 'logs -f'
+                return 'docker {} {}'.format(args.docker_command, host)
         else:
-            return 'docker exec -it {} {}'.format(host, args.shell)
+            return 'docker exec -it {} bash'.format(host)
 
 
 class DockerComposeConnection(DockerConnection):
@@ -84,8 +97,7 @@ class DockerComposeConnection(DockerConnection):
         for host in args.hosts:
             logger.debug('filtered_name = "{}"'.format(host))
             if host not in containers:
-                print("No such service '{}' in {}".format(host, containers))
-                sys.exit(posix.EX_USAGE)
+                raise ValueError("No such service '{}' in {}".format(host, containers))
             filtered_hosts.append(host)
         logger.debug('filtered_hosts = "{}"'.format(filtered_hosts))
 
@@ -98,7 +110,6 @@ class DockerComposeConnection(DockerConnection):
                 hosts.append(container[0])
 
         if len(hosts) == 0:
-            print("No running docker containers detected to connect to!")
-            sys.exit(posix.EX_USAGE)
+            raise ValueError("No running docker containers detected to connect to!")
 
         return hosts

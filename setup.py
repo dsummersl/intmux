@@ -24,6 +24,7 @@ setup(
     long_description_content_type='text/markdown',
     keywords='ssh tmux docker cli',
     url='https://github.com/dsummersl/intmux',
+    python_requires='>=3',
     py_modules=[],
     install_requires=[],
     packages=[
@@ -31,5 +32,7 @@ setup(
     ],
     entry_points={
         'console_scripts': ['intmux = scripts.intmux:main']
-    }
+    },
+    setup_requires=['pytest-runner'],
+    tests_require=['pytest']
 )

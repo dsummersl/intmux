@@ -1,6 +1,8 @@
 import logging
 import os.path
+import posix
 import subprocess
+import sys
 
 from . import connections
 
@@ -55,7 +57,11 @@ class TmuxSession(object):
             for line in args.input.readlines():
                 self.hosts.append(line[:-1])
         else:
-            self.hosts = self.connection_type.hosts(args)
+            try:
+                self.hosts = self.connection_type.hosts(args)
+            except ValueError as e:
+                print(e)
+                sys.exit(posix.EX_USAGE)
 
         if len(self.hosts) == 0:
             print("At least one host must be specified!\n")
