@@ -65,6 +65,41 @@ class TestDockerConnection:
         args.hosts = ['wo', 'blah']
         assert ['containerid2'] == connections.DockerConnection.hosts(args)
 
+    def test_connect(self, output_mock):
+        args = MagicMock()
+        args.hosts = ['containerid1']
+        args.approximate = False
+        args.docker_command = ''
+
+        self._setup_sife_effect(output_mock)
+        assert 'docker exec -it containerid1 bash' == \
+            connections.DockerConnection.connect('containerid1', args)
+
+    def test_command(self, output_mock):
+        args = MagicMock()
+        args.hosts = ['host1']
+        args.approximate = False
+        args.docker_command = ''
+        args.command = 'pwd'
+
+        self._setup_sife_effect(output_mock)
+        assert 'docker exec -it containerid1 pwd && docker exec -it containerid1 bash' == \
+            connections.DockerConnection.command('containerid1', args)
+
+    def test_copy(self, output_mock):
+        args = MagicMock()
+        args.hosts = ['host1']
+        args.approximate = False
+        args.docker_command = ''
+        args.script = 'test.sh'
+
+        self._setup_sife_effect(output_mock)
+        assert ('docker cp test.sh containerid1:/tmp && '
+                'docker exec -it containerid1 chmod u+x /tmp/test.sh && '
+                'docker exec -it containerid1 /tmp/test.sh && '
+                'docker exec -it containerid1 bash') == \
+            connections.DockerConnection.copy('containerid1', args)
+
 
 @patch('scripts.connections.check_output_as_list')
 class TestDockerComposeConnection:
@@ -158,3 +193,46 @@ class TestSSHDockerConnection:
         assert hosts == [
             'host1,containerid1', '\n',
             'host2,containerid12', 'host2,containerid22']
+
+    def test_connect(self, output_mock):
+        args = MagicMock()
+        args.hosts = ['host1']
+        args.docker_containers = 'one'
+        args.approximate = False
+        args.ssh_options = ''
+        args.docker_command = ''
+
+        self._setup_sife_effect(output_mock)
+        assert 'ssh -t  host1 docker exec -it containerid1 bash' == \
+            connections.SSHDockerConnection.connect('host1,containerid1', args)
+
+    def test_command(self, output_mock):
+        args = MagicMock()
+        args.hosts = ['host1']
+        args.docker_containers = 'one'
+        args.approximate = False
+        args.ssh_options = ''
+        args.docker_command = ''
+        args.command = 'pwd'
+
+        self._setup_sife_effect(output_mock)
+        assert 'ssh -t  host1 docker exec -it containerid1 pwd && ssh -t  host1 docker exec -it containerid1 bash' == \
+            connections.SSHDockerConnection.command('host1,containerid1', args)
+
+    def test_copy(self, output_mock):
+        args = MagicMock()
+        args.hosts = ['host1']
+        args.docker_containers = 'one'
+        args.approximate = False
+        args.ssh_options = ''
+        args.docker_command = ''
+        args.script = 'test.sh'
+
+        self._setup_sife_effect(output_mock)
+
+        assert ('scp  test.sh host1:/tmp && ssh  host1 chmod u+x /tmp/test.sh && '
+                'ssh -t  host1 docker cp /tmp/test.sh containerid1:/tmp && '
+                'ssh -t  host1 docker exec -it containerid1 chmod u+x /tmp/test.sh && '
+                'ssh -t  host1 docker exec -it containerid1 /tmp/test.sh && '
+                'ssh -t  host1 docker exec -it containerid1 bash') == \
+            connections.SSHDockerConnection.copy('host1,containerid1', args)

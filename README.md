@@ -7,18 +7,31 @@ intmux is a command line application to connect to multiple ssh/docker hosts
 within a tmux session. Supports connections to SSH hosts, local docker and
 docker-compose.
 
+For each matching host intmux will create a new pane (up to `--tmux-panes` per
+window) and set the tmux synchronize-panes options (pass --tmux-no-sync to turn
+this off), and run a shell (configurable via `--command`, `--script` or
+other switches specific to the connection method).
+
+You can intmux inside a tmux session (creates a new session within it) or out.
+
 **SSH**
 
-By default intmux will open up to six hosts in a new tmux session. For example,
-the following command creates a new tmux session with two windows (one ssh'd to
-host1, another to user@host2):
+The following command creates a new tmux session with one window with two panes
+(one ssh'd to host1, another to user@host2):
 
     intmux ssh host1 user@host2
+
+    # Connect to hosts listed in inputfile.txt
     intmux -i inputfile.txt ssh
 
-One could use the `--sync` option to enable tmux's 'synchronized-panes' setting:
+    # Connect to hosts, with a separate window for each host
+    intmux --tmux-panes 1 ssh host1 user@host2
 
-    intmux --sync ssh host1 host2 host3
+    # Connect and tail the syslogs:
+    intmux --command 'sudo tail -f /var/log/syslog' ssh host1 user@host2
+
+    # Run a script (copies local script to remote host, and executes it)
+    intmux --script ./local_script.sh ssh host1 user@host2
 
 **Docker**
 
@@ -66,7 +79,6 @@ Execute:
 Help
 ----
 
-
 Main help:
 
     intmux --help
@@ -99,8 +111,7 @@ Main help:
                             Execute commands in local file remotely
       --tmux-panes PANES, -p PANES
                             Max tmux panes per window (default: 6)
-      --tmux-sync, -S       Run tmux's set-option synchronize-panes on each tmux
-                            window
+      --tmux-no-sync, -S    Do not run tmux's set-option synchronize-panes
       --tmux-session SESSION, -t SESSION
                             tmux session name (default: intmux)
 
@@ -166,6 +177,7 @@ Docker Compose help:
                             host is substituted there, the host is appended.
       --approximate, -a     Include any docker container names that only partially
                             match hosts.
+
 SSH Docker help:
 
     intmux ssh-docker -h

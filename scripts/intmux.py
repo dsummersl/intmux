@@ -47,14 +47,14 @@ def main():
         help="Read list of hosts from input file when provided, otherwise from STDIN.")
     parser.add_argument(
         '--script', '-s', default="",
-        help="Execute commands in local file remotely")
+        help="Execute commands in local file remotely (executes over --command option)")
 
     parser.add_argument(
         '--tmux-panes', '-p', default=6, metavar="PANES",
         help="Max tmux panes per window (default: 6)")
     parser.add_argument(
-        '--tmux-sync', '-S', action='store_true',
-        help="Run tmux's set-option synchronize-panes on each tmux window")
+        '--tmux-no-sync', '-S', action='store_true',
+        help="Do not run tmux's set-option synchronize-panes")
     parser.add_argument(
         '--tmux-session', '-t', default='intmux', metavar="SESSION",
         help="tmux session name (default: intmux)")

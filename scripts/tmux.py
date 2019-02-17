@@ -34,7 +34,7 @@ class TmuxSession(object):
         self.args = args
         self.session = args.tmux_session
         self.panes = args.tmux_panes
-        self.sync = args.tmux_sync
+        self.sync = not args.tmux_no_sync
         self.command = args.command
         self.script = args.script
 
@@ -102,16 +102,12 @@ class TmuxSession(object):
             if self.script:
                 tmux("send-keys -t {}:{} \"{}\" C-m".format(
                     self.session, wcnt, self.connection_type.copy(host, self.args)))
-
-            tmux("send-keys -t {}:{} \"{}\" C-m".format(
-                self.session, wcnt, self.connection_type.connect(host, self.args)))
-
-            if self.command:
-                tmux("send-keys -t {}:{} {} C-m".format(self.session, wcnt, self.command))
-
-            if self.script:
-                basename = os.path.basename(self.script)
-                tmux("send-keys -t {}:{} 'chmod u+x /tmp/{} && /tmp/{}' C-m".format(self.session, wcnt, basename, basename))
+            elif self.command:
+                tmux("send-keys -t {}:{} \"{}\" C-m".format(
+                    self.session, wcnt, self.connection_type.command(host, self.args)))
+            else:
+                tmux("send-keys -t {}:{} \"{}\" C-m".format(
+                    self.session, wcnt, self.connection_type.connect(host, self.args)))
 
             tmux("select-layout -t {}:{} tiled".format(self.session, wcnt))
 

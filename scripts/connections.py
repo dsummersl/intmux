@@ -1,7 +1,19 @@
 import logging
 import subprocess
+from contextlib import contextmanager
+from os import path
 
 logger = logging.getLogger('connections')
+
+
+@contextmanager
+def set_argument(parsed_args, name, value):
+    old_value = getattr(parsed_args, name)
+    setattr(parsed_args, name, value)
+    try:
+        yield parsed_args
+    finally:
+        setattr(parsed_args, name, old_value)
 
 
 def check_output_as_list(command):
@@ -16,7 +28,7 @@ def check_output_as_list(command):
 
 class Connection(object):
     @classmethod
-    def hosts(cls, args):
+    def hosts(cls, parsed_args):
         """ Returns a list of hosts to connect to.
 
         Can return a host as '\n' to force tmux to make a new window.
@@ -24,34 +36,49 @@ class Connection(object):
         raise NotImplementedError()
 
     @classmethod
-    def copy(cls, host, args):
+    def copy(cls, host, parsed_args):
         raise NotImplementedError()
 
     @classmethod
-    def connect(cls, host, args):
+    def command(cls, host, parsed_args):
+        raise NotImplementedError()
+
+    @classmethod
+    def connect(cls, host, parsed_args):
         raise NotImplementedError()
 
 
 class SSHConnection(Connection):
     @classmethod
-    def hosts(cls, args):
-        if len(args.hosts) == 0:
+    def hosts(cls, parsed_args):
+        if len(parsed_args.hosts) == 0:
             raise ValueError("At least one host must be specified!\n")
-        return args.hosts
+        return parsed_args.hosts
 
     @classmethod
-    def copy(cls, host, args):
-        return 'scp {} {} {}:/tmp'.format(args.ssh_options, args.script, host)
+    def copy(cls, host, parsed_args, and_execute=True):
+        script_path, script_name = path.split(parsed_args.script)
+        copy = 'scp {} {} {}:/tmp'.format(parsed_args.ssh_options, parsed_args.script, host)
+        connect = cls.connect(host, parsed_args)
+        chmod = connect + ' chmod u+x /tmp/{}'.format(script_name)
+        if and_execute:
+            execute = connect + ' /tmp/{}'.format(script_name)
+            return '{} && {} && {} && {}'.format(copy, chmod, execute, connect)
+        return '{} && {}'.format(copy, chmod)
 
     @classmethod
-    def connect(cls, host, args):
-        return 'ssh {} {}'.format(args.ssh_options, host)
+    def command(cls, host, parsed_args):
+        return 'ssh {} {} {}'.format(parsed_args.ssh_options, host, parsed_args.command)
+
+    @classmethod
+    def connect(cls, host, parsed_args):
+        return 'ssh {} {}'.format(parsed_args.ssh_options, host)
 
 
 class DockerConnection(Connection):
     @classmethod
-    def hosts(cls, args, prepend_command=''):
-        host_names = args.hosts
+    def hosts(cls, parsed_args, prepend_command=''):
+        host_names = parsed_args.hosts
         matched_host_names = {}
         for name in host_names:
             matched_host_names[name] = False
@@ -69,16 +96,16 @@ class DockerConnection(Connection):
                 elif i in host_names:
                     hosts.append(i)
                     matched_host_names[n] = True
-                elif args.approximate and any(name in n for name in host_names):
+                elif parsed_args.approximate and any(name in n for name in host_names):
                     hosts.append(i)
-                elif args.approximate and any(name in i for name in host_names):
+                elif parsed_args.approximate and any(name in i for name in host_names):
                     hosts.append(i)
 
         logger.debug("hosts = {0}".format(hosts))
 
         if len(hosts) == 0:
             raise ValueError("No docker containers detected to connect to!")
-        if not args.approximate:
+        if not parsed_args.approximate:
             for name in host_names:
                 if not matched_host_names[name]:
                     raise ValueError("No container named '{}' found!".format(name))
@@ -86,36 +113,52 @@ class DockerConnection(Connection):
         return hosts
 
     @classmethod
-    def copy(cls, host, args, prepend_command=''):
-        return '{}docker cp {} {}:/tmp'.format(prepend_command, args.script, host)
+    def _execute(cls, host, parsed_args, command, prepend_command=''):
+        with set_argument(parsed_args, 'docker_command', 'exec -it {}'.format('{} ' + command)) as parsed_args:
+            return cls.connect(host, parsed_args, prepend_command)
 
     @classmethod
-    def connect(cls, host, args, prepend_command=''):
-        if args.docker_command:
-            if '{}' in args.docker_command:
+    def copy(cls, host, parsed_args, prepend_command=''):
+        script_path, script_name = path.split(parsed_args.script)
+        copy = '{}docker cp {} {}:/tmp'.format(prepend_command, parsed_args.script, host)
+        chmod = cls._execute(host, parsed_args, 'chmod u+x /tmp/' + script_name, prepend_command)
+        execute = cls._execute(host, parsed_args, '/tmp/' + script_name, prepend_command)
+        connect = cls.connect(host, parsed_args, prepend_command)
+        return '{} && {} && {} && {}'.format(copy, chmod, execute, connect)
+
+    @classmethod
+    def command(cls, host, parsed_args, prepend_command=''):
+        command = cls._execute(host, parsed_args, parsed_args.command, prepend_command)
+        connect = cls.connect(host, parsed_args, prepend_command)
+        return '{} && {}'.format(command, connect)
+
+    @classmethod
+    def connect(cls, host, parsed_args, prepend_command=''):
+        if parsed_args.docker_command:
+            if '{}' in parsed_args.docker_command:
                 # Commands like:
                 #  -dc 'exec -it {} bash'
-                return '{}docker {}'.format(prepend_command, args.docker_command.format(host))
+                return '{}docker {}'.format(prepend_command, parsed_args.docker_command.format(host))
             else:
                 # Commands without {} get host appended to it, like:
                 #  -dc logs
                 #  -dc 'logs -f'
-                return '{}docker {} {}'.format(prepend_command, args.docker_command, host)
+                return '{}docker {} {}'.format(prepend_command, parsed_args.docker_command, host)
         else:
             return '{}docker exec -it {} bash'.format(prepend_command, host)
 
 
 class DockerComposeConnection(DockerConnection):
     @classmethod
-    def hosts(cls, args):
+    def hosts(cls, parsed_args):
         containers = check_output_as_list('docker-compose ps --filter="status=running" --services')
         logger.debug('containers = "{}"'.format(containers))
 
         filtered_hosts = []
         for container_name in containers:
-            if container_name in args.hosts:
+            if container_name in parsed_args.hosts:
                 filtered_hosts.append(container_name)
-            elif args.approximate and any(h in container_name for h in args.hosts):
+            elif parsed_args.approximate and any(h in container_name for h in parsed_args.hosts):
                 filtered_hosts.append(container_name)
 
         logger.debug('filtered_hosts = "{}"'.format(filtered_hosts))
@@ -138,44 +181,43 @@ class DockerComposeConnection(DockerConnection):
 
 class SSHDockerConnection(DockerConnection):
     @classmethod
-    def hosts(cls, args):
-        if len(args.hosts) == 0:
+    def hosts(cls, parsed_args):
+        if len(parsed_args.hosts) == 0:
             raise ValueError("At least one host must be specified!\n")
 
-        ssh_hosts = args.hosts
+        ssh_hosts = parsed_args.hosts
 
-        try:
-            args.hosts = args.docker_containers.split(',')
-
+        with set_argument(parsed_args, 'hosts', parsed_args.docker_containers.split(',')) as parsed_args:
             hosts = []
             for ssh_host in ssh_hosts:
-                found_containers = super().hosts(args, 'ssh {} '.format(ssh_host))
+                found_containers = super().hosts(parsed_args, 'ssh {} '.format(ssh_host))
                 more_hosts = ['{},{}'.format(ssh_host, container) for container in found_containers]
                 if len(hosts) > 0 and len(more_hosts) > 0:
                     hosts.append('\n')
                 hosts.extend(more_hosts)
 
             return hosts
-        finally:
-            args.hosts = ssh_hosts
 
     @classmethod
-    def copy(cls, host, args):
+    def copy(cls, host, parsed_args):
         ssh_host, container = host.split(',')
-        ssh_copy = SSHConnection.copy(ssh_host, args)
-        ssh_command = SSHConnection.copy(ssh_host, args)
-        docker_copy = DockerConnection.copy(container, args, prepend_command=ssh_command + ' ')
+        ssh_copy = SSHConnection.copy(ssh_host, parsed_args, and_execute=False)
+        with set_argument(parsed_args, 'ssh_options', '-t ' + parsed_args.ssh_options) as parsed_args:
+            ssh_command = SSHConnection.connect(ssh_host, parsed_args)
+        with set_argument(parsed_args, 'script', '/tmp/' + parsed_args.script) as parsed_args:
+            docker_copy = DockerConnection.copy(container, parsed_args, prepend_command=ssh_command + ' ')
         return '{} && {}'.format(ssh_copy, docker_copy)
 
     @classmethod
-    def connect(cls, host, args):
+    def command(cls, host, parsed_args, prepend_command=''):
         ssh_host, container = host.split(',')
-        ssh_options = args.ssh_options
-        args.ssh_options = '-t ' + ssh_options
+        with set_argument(parsed_args, 'ssh_options', '-t ' + parsed_args.ssh_options) as parsed_args:
+            ssh_command = SSHConnection.connect(ssh_host, parsed_args)
+            return DockerConnection.command(container, parsed_args, prepend_command=ssh_command + ' ')
 
-        try:
-            ssh_command = SSHConnection.connect(ssh_host, args)
-            result = DockerConnection.connect(container, args, prepend_command=ssh_command + ' ')
-            return result
-        finally:
-            args.ssh_options = ssh_options
+    @classmethod
+    def connect(cls, host, parsed_args):
+        ssh_host, container = host.split(',')
+        with set_argument(parsed_args, 'ssh_options', '-t ' + parsed_args.ssh_options) as parsed_args:
+            ssh_command = SSHConnection.connect(ssh_host, parsed_args)
+            return DockerConnection.connect(container, parsed_args, prepend_command=ssh_command + ' ')
