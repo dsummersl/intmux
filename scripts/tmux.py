@@ -55,15 +55,22 @@ class TmuxSession(object):
             sys.exit(posix.EX_USAGE)
 
         self.hosts = []
-        if args.input:
+        # Read hosts from stdin
+        if not sys.stdin.isatty():
+            for line in sys.stdin.readlines():
+                self.hosts.append(line[:-1])
+            logger.debug('STDIN hosts = {}'.format(self.hosts))
+        elif args.input:
             for line in args.input.readlines():
                 self.hosts.append(line[:-1])
+            logger.debug('--input hosts = {}'.format(self.hosts))
         else:
             try:
                 self.hosts = self.connection_type.hosts(args)
             except ValueError as e:
                 print(e)
                 sys.exit(posix.EX_USAGE)
+            logger.debug('connection hosts = {}'.format(self.hosts))
 
         if len(self.hosts) == 0:
             print("At least one host must be specified!\n")
