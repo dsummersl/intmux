@@ -63,17 +63,17 @@ def main():
 
     ssh_parser = subparsers.add_parser(
         'ssh', help='Connect to hosts via SSH',
-        description='Connect to the provided hosts.')
+        description='Connect to the provided hosts (or read from STDIN).')
     add_ssh_options(ssh_parser)
 
     docker_parser = subparsers.add_parser(
         'docker', help="Connect to docker containers via 'docker exec'",
-        description='Connect to the provided running containers')
+        description='Connect to the provided running containers (or read from STDIN).')
     add_docker_options(docker_parser)
 
     ssh_docker_parser = subparsers.add_parser(
         'ssh-docker', help="Connect to docker containers on remote SSH hosts",
-        description='Connect to docker containers on provided SSH hosts')
+        description='Connect to docker containers on provided SSH hosts (or read from STDIN).')
     add_ssh_options(ssh_docker_parser)
     ssh_docker_parser.add_argument(
         '--docker-containers', '-dC',
