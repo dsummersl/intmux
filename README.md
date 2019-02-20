@@ -14,7 +14,7 @@ other switches specific to the connection method).
 
 You can intmux inside a tmux session (creates a new session within it) or out.
 
-<iframe width="640" height="564" src="https://player.vimeo.com/video/318435076" frameborder="0" allowFullScreen mozallowfullscreen webkitAllowFullScreen></iframe>
+[See a demo](https://player.vimeo.com/video/318435076)
 
 **SSH**
 
