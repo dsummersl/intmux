@@ -35,6 +35,11 @@ The following command creates a new tmux session with one window with two panes
     # Run a script (copies local script to remote host, and executes it)
     intmux --script ./local_script.sh ssh host1 user@host2
 
+The 'ssh' command can be customized, for alternate connection methods such as
+mosh:
+
+    intmux ssh --ssh-command mosh host1 user@host2
+
 **Docker**
 
 intmux can also be used to connect to all running local docker instances:
@@ -130,6 +135,8 @@ SSH help:
 
     optional arguments:
       -h, --help            show this help message and exit
+      --ssh-command SSH_COMMAND, -sc SSH_COMMAND
+                            SSH command (default: ssh)
       --ssh-options SSH_OPTIONS, -so SSH_OPTIONS
                             Options to pass to SSH connection.
 
