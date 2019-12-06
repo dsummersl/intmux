@@ -27,6 +27,8 @@ def add_docker_options(subparser, include_hosts=True):
 
 def add_ssh_options(subparser):
     subparser.add_argument(
+        '--ssh-command', '-sc', default="ssh", help="SSH command (default: ssh)")
+    subparser.add_argument(
         '--ssh-options', '-so', default="", help="Options to pass to SSH connection.")
     subparser.add_argument('hosts', nargs='*', help="SSH hosts to connect to.")
 

@@ -11,7 +11,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='intmux',
-    version='0.7.0',
+    version='0.8.0',
     author='Dane Summers',
     classifiers=[
         "Programming Language :: Python :: 3",
@@ -22,7 +22,7 @@ setup(
     description='Connect to multiple hosts simultaneously "in tmux" via ssh and docker.',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    keywords='ssh tmux docker cli',
+    keywords='ssh tmux docker cli mosh',
     url='https://github.com/dsummersl/intmux',
     python_requires='>=3',
     py_modules=[],

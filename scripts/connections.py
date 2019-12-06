@@ -68,11 +68,11 @@ class SSHConnection(Connection):
 
     @classmethod
     def command(cls, host, parsed_args):
-        return 'ssh {} {} {}'.format(parsed_args.ssh_options, host, parsed_args.command)
+        return '{} {} {} {}'.format(parsed_args.ssh_command, parsed_args.ssh_options, host, parsed_args.command)
 
     @classmethod
     def connect(cls, host, parsed_args):
-        return 'ssh {} {}'.format(parsed_args.ssh_options, host)
+        return '{} {} {}'.format(parsed_args.ssh_command, parsed_args.ssh_options, host)
 
 
 class DockerConnection(Connection):
